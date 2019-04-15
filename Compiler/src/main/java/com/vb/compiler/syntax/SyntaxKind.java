@@ -1,0 +1,76 @@
+package com.vb.compiler.syntax;
+
+public enum SyntaxKind {
+    UNKNOWN,
+
+    //TOKENS
+    ASTERISK_TOKEN,
+    MINUS_TOKEN,
+    PLUS_TOKEN,
+    EQUALS_TOKEN,
+    SLASH_TOKEN,
+    OPEN_PAREN_TOKEN,
+    CLOSE_PAREN_TOKEN,
+    COMMA_TOKEN,
+    NEW_LINE_TOKEN,
+    END_OF_TEXT,
+    IDENTIFIER_TOKEN,
+    LITERAL_TOKEN,
+
+    //KEYWORDS
+    DIM_KEYWORD,
+    AS_KEYWORD,
+    SELECT_KEYWORD,
+    CASE_KEYWORD,
+    TO_KEYWORD,
+    ELSE_KEYWORD,
+    END_KEYWORD,
+    INTEGER_KEYWORD,
+    STRING_KEYWORD,
+    DOUBLE_KEYWORD,
+
+    //NONTERMINALS
+    PROGRAM_NONTERM,
+    STATEMENTS_LIST_NONTERM,
+    STATEMENTS_CONTINUE_NONTERM,
+    STATEMENTS_LIST_NULLABLE_NONTERM,
+    STATEMENTS_LIST_WITH_NL_NONTERM,
+    STATEMENT_NONTERM,
+    NEW_LINE_LIST_NONTERM,
+    STM_DECLAREMENT_BODY_NONTERM,
+    ID_LIST_NONTERM,
+    SPECIAL_TYPE_NONTERM,
+    STM_VAR_ASSIGMENT_NONTERM,
+    VALUE_NONTERM,
+    STM_SELECT_CASE_NONTERM,
+    CASE_SET_NONTERM,
+    CASE_ELSE_LINE_NONTERM,
+    CASE_VALUE_LINE_NONTERM,
+    CASE_EXP_NONTERM;
+
+
+    public static boolean isNonterminal(SyntaxKind kind) {
+        switch (kind) {
+            case PROGRAM_NONTERM:
+            case STATEMENTS_LIST_NONTERM:
+            case STATEMENTS_CONTINUE_NONTERM:
+            case STATEMENTS_LIST_NULLABLE_NONTERM:
+            case STATEMENTS_LIST_WITH_NL_NONTERM:
+            case STATEMENT_NONTERM:
+            case NEW_LINE_LIST_NONTERM:
+            case STM_DECLAREMENT_BODY_NONTERM:
+            case ID_LIST_NONTERM:
+            case SPECIAL_TYPE_NONTERM:
+            case STM_VAR_ASSIGMENT_NONTERM:
+            case VALUE_NONTERM:
+            case STM_SELECT_CASE_NONTERM:
+            case CASE_SET_NONTERM:
+            case CASE_ELSE_LINE_NONTERM:
+            case CASE_VALUE_LINE_NONTERM:
+            case CASE_EXP_NONTERM:
+                return true;
+            default:
+                return false;
+        }
+    }
+}
