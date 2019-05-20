@@ -2,6 +2,8 @@ package com.vb.compiler.error;
 
 /**
  * Represents class that contains information about parser error.
+ *
+ * @author haqoff
  */
 public class SyntaxDiagnosticInfo {
     private ErrorCode code;

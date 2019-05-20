@@ -13,7 +13,9 @@ import com.vb.compiler.text.SourceTextReader;
 import java.util.ArrayList;
 
 /**
- * Represents a lexer that splits the input text into tokens.
+ * Represents a lexer that splits the input text into tokens.\
+ *
+ * @author haqoff
  */
 public class Lexer {
 
@@ -179,17 +181,16 @@ public class Lexer {
                 break;
             }
 
-            offset++;
-
             if (ch == '\"') {
                 break;
             }
+
+            offset++;
         }
 
-        //case "END_OF_TEXT_TOKEN
-        info.textValue = offset > 1 ? reader.substring(start + 1, start + offset - 1) : "";
+        info.textValue = reader.substring(start + 1, start + offset);
 
-        reader.advanceChar(offset);
+        reader.advanceChar(offset + 1);
     }
 
     private void scanNumericLiteral(TokenInfo info) {
@@ -252,18 +253,18 @@ public class Lexer {
         if (info.kind == SyntaxKind.LITERAL_TOKEN) {
             switch (info.type) {
                 case INTEGER:
-                    return new SyntaxLiteralToken<>(info.intValue, errorsArray);
+                    return new SyntaxLiteralToken<>(info.tokenStartPosition, info.textValue.length(), info.intValue, errorsArray);
                 case DOUBLE:
-                    return new SyntaxLiteralToken<>(info.doubleValue, errorsArray);
+                    return new SyntaxLiteralToken<>(info.tokenStartPosition, info.textValue.length(), info.doubleValue, errorsArray);
                 case STRING:
-                    return new SyntaxLiteralToken<>(info.textValue, errorsArray);
+                    return new SyntaxLiteralToken<>(info.tokenStartPosition, info.textValue.length(), info.textValue, errorsArray);
                 default:
                     throw new RuntimeException("info.type was not handled.");
             }
         } else if (info.kind == SyntaxKind.IDENTIFIER_TOKEN) {
-            return new SyntaxIdentifier(info.textValue, errorsArray);
+            return new SyntaxIdentifier(info.tokenStartPosition, info.textValue, errorsArray);
         } else {
-            return new SyntaxToken(info.textValue, info.kind, errorsArray);
+            return new SyntaxToken(info.tokenStartPosition, info.textValue.length(), info.kind, errorsArray);
         }
     }
 

@@ -1,114 +1,86 @@
 package com.vb.gui.controller;
 
+import com.vb.compiler.error.CriticalParserException;
 import com.vb.compiler.error.SyntaxDiagnosticInfo;
+import com.vb.compiler.parser.LanguageParser;
 import com.vb.compiler.parser.Lexer;
 import com.vb.compiler.syntax.SyntaxFacts;
 import com.vb.compiler.syntax.SyntaxKind;
+import com.vb.compiler.syntax.tree.NonterminalNode;
 import com.vb.compiler.syntax.tree.tokens.SyntaxToken;
 import com.vb.compiler.text.SourceTextReader;
+import com.vb.gui.util.ExpressionTreeViewBuilder;
+import com.vb.gui.util.StringUtil;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.fxml.FXML;
+import javafx.collections.ObservableList;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.ResourceBundle;
+import java.util.stream.Stream;
 
 public class MainFormController implements Initializable {
-    @FXML
-    private TextArea sourceCode;
+    public TreeView<String> tvExpressionTree;
+    public TextArea sourceCode;
+    public ListView<String> lvConsole;
 
-    @FXML
-    private ListView<String> lvConsole;
+    public TableView<SyntaxToken> lexTable;
+    public TableColumn<SyntaxToken, String> inputLexColumn;
+    public TableColumn<SyntaxToken, String> resultLexColumn;
 
-    @FXML
-    private TableView<SyntaxToken> lexTable;
-    @FXML
-    private TableColumn<SyntaxToken, String> inputLexColumn;
-    @FXML
-    private TableColumn<SyntaxToken, String> resultLexColumn;
+    public TableView keywordTable;
+    public TableColumn<String, String> keywordColumn;
 
-    @FXML
-    private TableView keywordTable;
-    @FXML
-    private TableColumn<String, String> keywordColumn;
+    public TableView separatorTable;
+    public TableColumn<String, String> separatorColumn;
 
-    @FXML
-    private TableView<String> separatorTable;
-    @FXML
-    private TableColumn<String, String> separatorColumn;
+    public TableView<String> literalTable;
+    public TableColumn<String, String> literalColumn;
 
-    @FXML
-    private TableView<String> literalTable;
-    @FXML
-    private TableColumn<String, String> literalColumn;
-
-    @FXML
-    private TableView<String> identifierTable;
-    @FXML
-    private TableColumn<String, String> identifierColumn;
+    public TableView<String> identifierTable;
+    public TableColumn<String, String> identifierColumn;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         sourceCode.textProperty().addListener(handler -> onSourceTextChanged());
-        inputLexColumn.setCellValueFactory(param -> new ReadOnlyStringWrapper(formatReadable(param.getValue())));
-        resultLexColumn.setCellValueFactory(param -> defineResult(param));
+        inputLexColumn.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue().toString()));
+        resultLexColumn.setCellValueFactory(param -> defineTokenTable(param.getValue()));
         literalColumn.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue()));
-        separatorColumn.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue()));
         identifierColumn.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue()));
 
         setKeywords();
         setSeparatorTable();
     }
 
-    private String formatReadable(SyntaxToken token) {
-        String text = token.getTextValue();
-        if (text.equals("\n") || text.equals(Character.toString(SourceTextReader.NULL_CHARACTER)))
-            text = token.getKind().name();
+    private ObservableValue<String> defineTokenTable(SyntaxToken token) {
+        SyntaxKind kind = token.getKind();
+        String textValue = token.toString();
 
-        return text;
-    }
+        int nTable = 0;
+        int nRow = 0;
 
-    private ObservableValue<String> defineResult(TableColumn.CellDataFeatures<SyntaxToken, String> param) {
-        SyntaxToken token = param.getValue();
-
-        String res = null;
-        switch (token.getKind()) {
-
-            case UNKNOWN:
-                res = token.getErrors()[0].getCode().name();
-                break;
-            case IDENTIFIER_TOKEN:
-                res = String.format("(4, %s)", checkAndAdd(token.getTextValue().toLowerCase(), identifierTable));
-                break;
-            case LITERAL_TOKEN:
-                res = String.format("(3, %s)", checkAndAdd(token.getTextValue(), literalTable));
-                break;
-            case DIM_KEYWORD:
-            case AS_KEYWORD:
-            case SELECT_KEYWORD:
-            case CASE_KEYWORD:
-            case TO_KEYWORD:
-            case ELSE_KEYWORD:
-            case END_KEYWORD:
-            case INTEGER_KEYWORD:
-            case STRING_KEYWORD:
-            case DOUBLE_KEYWORD:
-                res = String.format("(1, %s)", checkAndAdd(token.getTextValue(), keywordTable));
-                break;
-            default:
-                String text = formatReadable(token);
-                res = String.format("(2, %s)", checkAndAdd(text, separatorTable));
-                break;
+        if (kind == SyntaxKind.IDENTIFIER_TOKEN) {
+            nTable = 4;
+            nRow = checkAndAdd(textValue, identifierTable);
+        } else if (kind == SyntaxKind.LITERAL_TOKEN) {
+            nTable = 3;
+            nRow = checkAndAdd(textValue, literalTable);
+        } else if (SyntaxFacts.isKeyword(kind)) {
+            nTable = 1;
+            nRow = checkAndAdd(textValue, keywordTable);
+        }
+        //all that remains is separators and an unknown token. but we will not add unknown token.
+        else if (kind != SyntaxKind.UNKNOWN) {
+            nTable = 2;
+            nRow = checkAndAdd(textValue, separatorTable);
         }
 
-        return new ReadOnlyStringWrapper(res);
+        return new ReadOnlyStringWrapper(String.format("(%s, %s)", nTable, nRow));
     }
 
     private int checkAndAdd(String value, TableView<String> table) {
@@ -125,6 +97,39 @@ public class MainFormController implements Initializable {
         lvConsole.getItems().clear();
         identifierTable.getItems().clear();
         literalTable.getItems().clear();
+
+        showLexicalAnalyze();
+        showSyntaxAnalyze();
+    }
+
+    private void showSyntaxAnalyze() {
+        SourceTextReader reader = new SourceTextReader(sourceCode.getText());
+        Lexer lexer = new Lexer(reader);
+        LanguageParser parser = new LanguageParser(lexer);
+
+        try {
+            NonterminalNode tree = parser.getTree();
+            SyntaxDiagnosticInfo[] errors = tree.getErrors();
+
+            for (SyntaxDiagnosticInfo info : errors) {
+                lvConsole.getItems().add(info.getCode().name());
+            }
+
+            TreeItem<String> mainExpressionRoot = ExpressionTreeViewBuilder.getExpressionRoots(tree);
+            mainExpressionRoot.setExpanded(true);
+            tvExpressionTree.setRoot(mainExpressionRoot);
+            tvExpressionTree.setShowRoot(false);
+
+        } catch (CriticalParserException e) {
+            Stream<SyntaxKind> expectedKindsStream = e.getExpectedKinds().stream().filter(kind -> !SyntaxFacts.isNonterminal(kind));
+            String expectedKindsString = StringUtil.streamToString(expectedKindsStream, ", ");
+
+            String errorString = String.format("Encountered %s, but expected: [%s].", e.getErrorNode(), expectedKindsString);
+            lvConsole.getItems().add(errorString);
+        }
+    }
+
+    private void showLexicalAnalyze() {
 
         SourceTextReader reader = new SourceTextReader(sourceCode.getText());
         Lexer lexer = new Lexer(reader);
@@ -148,12 +153,27 @@ public class MainFormController implements Initializable {
 
     private void setKeywords() {
         keywordColumn.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue()));
-        keywordTable.setItems(FXCollections.observableArrayList(SyntaxFacts.KEYWORDS.keySet()));
+
+        String[] keyArray = Arrays
+                .stream(SyntaxKind.values())
+                .filter(SyntaxFacts::isKeyword)
+                .map(Enum::name)
+                .toArray(String[]::new);
+
+        ObservableList<String> kinds = FXCollections.observableArrayList(keyArray);
+        keywordTable.setItems(kinds);
     }
 
     private void setSeparatorTable() {
         separatorColumn.setCellValueFactory(param -> new ReadOnlyStringWrapper(param.getValue()));
-        separatorTable.setItems(FXCollections.observableArrayList(
-                "(", ")", "*", "+", ",", "-", "=", "NEW_LINE_TOKEN", "END_OF_TEXT"));
+
+        String[] sepArray = Arrays
+                .stream(SyntaxKind.values())
+                .filter(kind -> !SyntaxFacts.isKeyword(kind) && !SyntaxFacts.isNonterminal(kind) && kind != SyntaxKind.UNKNOWN)
+                .map(Enum::name)
+                .toArray(String[]::new);
+
+        ObservableList<String> kinds = FXCollections.observableArrayList(sepArray);
+        separatorTable.setItems(kinds);
     }
 }

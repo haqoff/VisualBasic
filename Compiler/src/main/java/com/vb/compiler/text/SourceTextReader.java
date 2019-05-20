@@ -2,6 +2,8 @@ package com.vb.compiler.text;
 
 /**
  * Represents a class for reading the source text.
+ *
+ * @author haqoff
  */
 public class SourceTextReader {
 
@@ -14,7 +16,7 @@ public class SourceTextReader {
     private int currentUnreadCharPos;
 
     /**
-     * Initialize new instance of {@see SourceTextReader} class with specified text.
+     * Initialize new instance of {@link SourceTextReader} class with specified text.
      *
      * @param text Source program text.
      * @throws IllegalArgumentException Occurs when source text equals {@code null}.
