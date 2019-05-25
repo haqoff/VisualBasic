@@ -86,7 +86,8 @@
                     <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TreeView fx:id="tvExpressionTree" layoutX="6.0" layoutY="8.0" prefHeight="512.0" prefWidth="397.0" />
+                        <TreeView fx:id="tvExpressionTree" layoutX="5.0" layoutY="9.0" prefHeight="512.0" prefWidth="390.0" />
+                        <TreeView fx:id="tvExpressionMatrix" layoutX="400.0" layoutY="9.0" prefHeight="512.0" prefWidth="394.0" />
                      </children></AnchorPane>
                     </content>
                 </Tab>

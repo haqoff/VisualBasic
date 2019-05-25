@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 
 public class MainFormController implements Initializable {
     public TreeView<String> tvExpressionTree;
+    public TreeView<String> tvExpressionMatrix;
     public TextArea sourceCode;
     public ListView<String> lvConsole;
 
@@ -115,10 +116,16 @@ public class MainFormController implements Initializable {
                 lvConsole.getItems().add(info.getCode().name());
             }
 
-            TreeItem<String> mainExpressionRoot = ExpressionTreeViewBuilder.getExpressionRoots(tree);
+            ExpressionTreeViewBuilder.ExpressionInfo info = ExpressionTreeViewBuilder.getExpressionInfo(tree);
+            TreeItem<String> mainExpressionRoot = info.treeRoot;
             mainExpressionRoot.setExpanded(true);
             tvExpressionTree.setRoot(mainExpressionRoot);
             tvExpressionTree.setShowRoot(false);
+
+            TreeItem<String> mainMatrixRoot = info.matrixRoot;
+            mainMatrixRoot.setExpanded(true);
+            tvExpressionMatrix.setRoot(mainMatrixRoot);
+            tvExpressionMatrix.setShowRoot(false);
 
         } catch (CriticalParserException e) {
             Stream<SyntaxKind> expectedKindsStream = e.getExpectedKinds().stream().filter(kind -> !SyntaxFacts.isNonterminal(kind));
